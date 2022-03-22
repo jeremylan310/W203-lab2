@@ -51,7 +51,7 @@ a. Name an omitted variable that you think could induce significant omitted vari
 
 b. Provide a story for why there might be a reverse causal pathway (from the number of views to the average rating).  Argue whether the direction of bias is towards zero or away from zero.
 
->One could argue that there exists a virtuous cycle between `views` and `rate`. Videos start increasing the number the views because their content resonates with the adueince, making the `rate` go up. As the views start to increase, the YouTube algorithm starts to expose that video to more users, making the views go up even more. When the video gets more exposure, more users view it, and are drawn to fill out with a good rate, given the high rating it already has (i.e. anchoring bias). With more views, the video gets even more exposure and the cycle continues.
+>One could argue that there exists a virtuous cycle between `views` and `rate`. Videos start increasing the number the views because their content resonates with the audience, making the `rate` go up. As the views start to increase, the YouTube algorithm starts to expose that video to more users, making the views go up even more. When the video gets more exposure, more users view it, and are drawn to fill out with a good rate, given the high rating it already has (i.e. anchoring bias). With more views, the video gets even more exposure and the cycle continues.
 >
 > This would change the causal graph in the following way:
 >
@@ -62,9 +62,9 @@ b. Provide a story for why there might be a reverse causal pathway (from the num
 >$$\text{views} = \beta_0 + \beta_1\cdot\text{rate} + \beta_2\cdot\text{length} + \epsilon_1 \text{  (1)}$$
 >$$\text{rate} = \gamma_0 + \gamma_1\cdot\text{views} + \epsilon_2 \text{  (2)}$$
 >
-> This implies that `rate` is a descendant of $\epsilon_1$ and dependent with it. Ultimately, this means that the equation (1) is not the true BLP, and OLS is no longer a good estimator for it. 
+> This implies that `rate` is a descendent of $\epsilon_1$ and dependent with it. Ultimately, this means that the equation (1) is not the true BLP, and OLS is no longer a good estimator for it. 
 >
-> As for the bias, $\gamma_1$ will add an effect to the true value of $\beta_1$ in the same direction than its sign. Given the virtous cycle we explained above, we will argue that $\gamma_1>0$, and we will assume that $\beta_1>0$, given the nature of the relationship between `rate` and `views` and the estimate obtained. This would then introduce a _positive feedback_, and thus $\hat{\beta}_1>\beta_1$ 
+> As for the bias, $\gamma_1$ will add an effect to the true value of $\beta_1$ in the same direction than its sign. Given the virtuous cycle we explained above, we will argue that $\gamma_1>0$, and we will assume that $\beta_1>0$, given the nature of the relationship between `rate` and `views` and the estimate obtained. This would then introduce a _positive feedback_, and thus $\hat{\beta}_1>\beta_1$ 
 
 c. You are considering adding a new variable, `ratings`, which represents the total number of ratings.  Explain how this would affect your measurement goal.
 
