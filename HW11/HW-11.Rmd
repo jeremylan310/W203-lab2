@@ -28,26 +28,28 @@ You will use the following variables:
 
 You want to use the `rate` variable as a proxy for video quality.  You also include `length` as a control variable.  You estimate the following ols regression:
 
-$$\text{views} =   789 +  2103    \text{ rate} +      3.00 \text{ length} $$
+$$\widehat{\text{views}} =   789 +  2103    \text{ rate} +      3.00 \text{ length} $$
 
 
 a. Name an omitted variable that you think could induce significant omitted variable bias.  Argue whether the direction of bias is towards zero or away from zero.
 
->We can think of a few omitted variables such as the ability to edit videos and create content from the author and those related to the YouTube channel of the video, particularly, the number of subscribers the channel has. The number of channel subscribers will help setting a baseline for the number of views, as the more subscribers the channel has, more people will be exposed to it. At the same time, people subscribed to the channel are more likely to like the kind content of the video, and thus more likely to increase the rate as well.
+>We can think of a few omitted variables such as the edit quality of the video (resolution, thumbnail, special effects, etc.) and those related to the YouTube channel of the video, particularly, the number of subscribers the channel has and topic of the channel. We'll focus on the edit quality of the video as it is a hard variable to measure making it difficult to include in the model. 
+>
+>The edit quality will be related with the views as a better quality will attract more users, perhaps because the thumbnail is more attractive, or the short image slides that appear when a user hover its mouse over the video icon have good quality and draws more users to click. On the other hand, a video with good resolution, special effects, good camera angles, etc., will be appreciated by the viewers who will be more likely to give a positive rating to the video. 
 >
 >Under these assumptions, the causal graph would be: 
 >
->![](img/causal_graph_omitted.png){width=50%}
+>![](img/causal_graph_editq_omitted.png){width=50%}
 >
 > The real model will also contain the omitted variable:
->$$\text{views} = \beta_0 + \beta_1\cdot\text{rate} + \beta_2\cdot\text{length} + \beta_3\cdot\text{channel\_subscribers} + \epsilon$$
->And we can also try to capture the relationship between the omitted variable and the ones already included in the model:
->$$\text{rate} = \delta_0 + \delta_1\cdot\text{channel\_subscribers}+v$$
+>$$\text{views} = \beta_0 + \beta_1\cdot\text{rate} + \beta_2\cdot\text{length} + \beta_3\cdot\text{edit\_quality} + \epsilon$$
+>To capture the relationship between the omitted variable and the ones already included in the model we would need to run the following regression:
+>$$\text{rate} = \delta_0 + \delta_1\cdot\text{edit\_quality}+v$$
 >
->The bias in this case will move the estimate away from zero, because the number of channel subscribers interacts positively with both views and the rate:
+>The bias in this case will move the estimate away from zero, because the edit quality of the video interacts positively with both `views` and `rating`, and we also assume that the true value of $\beta_{\text{rating}}$ is positive, as calculated in the estimated model:
 >$$\hat{\beta}_1 = \beta_1 + \beta_3\delta_1=(+) + (+)(+)$$
 >
->Last, we may argue that this variable won't have a strong incidence in the length of the videos, and thus have a neutral interaction with that variable, adding no additional biases to the aforementioned.
+>Last, we may argue that this variable won't have a strong incidence in the length of the videos. A good quality video can be both long or short, and thus have a neutral interaction with `length`, adding no additional biases to those aforementioned.
 
 b. Provide a story for why there might be a reverse causal pathway (from the number of views to the average rating).  Argue whether the direction of bias is towards zero or away from zero.
 
@@ -68,11 +70,11 @@ b. Provide a story for why there might be a reverse causal pathway (from the num
 
 c. You are considering adding a new variable, `ratings`, which represents the total number of ratings.  Explain how this would affect your measurement goal.
 
->The `ratings` would not only affect the views, but also the `rates`. This is because as you add more `ratings`, the `rate` of the video is subject to change. This would modify the causal graph: 
+>The `ratings` would not only affect the views, but also the `rate`. This is because as you add more `ratings`, the `rate` of the video is subject to change. This would modify the causal graph: 
 >
 >![](img/causal_graph_outvar.png){width=50%}
 >
->This means that this new variable can be interpreted as an outcome variable. Although outcome variables do not break any of the technical assumptions behind OLS, it makes the the interpretation of the model unclear. For a linear regression, we say that a coefficient is the change introduced by a variable in the outcome variable, maitaining everything else constant. With an outcome variable present, we are breaking this interpretation, as one of the variables directly affects the other one, and thus makes the explanation of the model not very straightforward. In this particular case, `ratings` will have a direct influence in the `rate` of the video, and thus we can no longer say that the coefficient of the `rate` is the change induced by that variable in the views holding everything else constant.
+>This means that this new variable can be interpreted as an outcome variable. Although outcome variables do not technically break any of the assumptions behind OLS, it makes the the interpretation of the model unclear. For a linear regression, we say that a coefficient is the change introduced by a variable in the outcome variable, maitaining everything else constant. With an outcome variable present, we are breaking this interpretation, as one of the variables directly affects the other one, and thus makes the explanation of the model not very straightforward. In this particular case, `ratings` will have a direct influence in the `rate` of the video, and thus we can no longer say that the coefficient of the `rate` is the change induced by that variable in the views holding everything else constant.
 >
 >To solve this issue, it is recommended not to include outcome variables in the right hand side of the equation. It would be best to choose either the number of `ratings` or the video's `rate`, but not both, as explanatory variables.
 
