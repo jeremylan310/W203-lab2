@@ -1,0 +1,328 @@
+---
+title: "EDA"
+author: "group2"
+date: '2022-03-27'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Imports
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(sandwich) # need to install
+library(lmtest)   # need to install
+```
+
+## Read data
+
+```{r}
+# read data as is
+fb_data = read_delim("./dataset_Facebook.csv", delim=";")
+
+# change col names
+cols = c(
+  "page_ttl_likes",
+  "type",
+  "category",
+  "post_month",
+  "post_wkday",
+  "post_hour",
+  "paid",
+  "lifetime_post_reach",
+  "lifetime_post_impressions",
+  "lifetime_engaged_users",
+  "lifetime_post_consumers",
+  "lifetime_post_consumptions",
+  "lifetime_post_impressions_from_page_have_likeds",
+  "lifetime_post_impressions_from_page_likes",
+  "lifetime_people_liked_engaged_with_post",
+  "comments",
+  "likes",
+  "shares",
+  "interactions"
+)
+colnames(fb_data) = cols
+
+summary(fb_data)
+```
+
+### Output variables
+
+
+#### Engagement
+Based on the paper, we can have the post's engaged users as output. The variable has a strong right skewed distribution, so we could potentially apply a log transformation. This would allow us to normalize the variable, minimize the outliers and interpret the coefficient as changes in the % of the variable, not the absolute values:
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=lifetime_engaged_users) +
+  geom_histogram(bins=20)
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(lifetime_engaged_users)) +
+  geom_histogram(bins=20)
+
+pb = fb_data %>% ggplot() +
+  aes(x=lifetime_engaged_users) +
+  geom_boxplot()
+
+pb2 = fb_data %>% ggplot() +
+  aes(x=log(lifetime_engaged_users)) +
+  geom_boxplot()
+
+grid.arrange(p1, pb, p2, pb2, ncol=2, nrow=2)
+```
+
+
+
+The paper actually runs the analysis by trying to predict 12 different variables using 7 inputs. I'll add a few other graphs here:
+
+
+#### Interactions
+Interactions is the sum of likes, shares and comments:
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=interactions) +
+  geom_histogram(bins=20)
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(interactions)) +
+  geom_histogram(bins=20)
+
+pb = fb_data %>% ggplot() +
+  aes(x=interactions) +
+  geom_boxplot()
+
+pb2 = fb_data %>% ggplot() +
+  aes(x=log(interactions)) +
+  geom_boxplot()
+
+grid.arrange(p1, pb, p2, pb2, ncol=2, nrow=2)
+```
+
+
+#### Reach
+Number of people the post reached:
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=lifetime_post_reach) +
+  geom_histogram(bins=20)
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(lifetime_post_reach)) +
+  geom_histogram(bins=20)
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+
+
+
+#### Comments
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=comments) +
+  geom_histogram(bins=20)
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(comments)) +
+  geom_histogram(bins=20)
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+
+#### Likes
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=likes) +
+  geom_histogram(bins=20)
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(likes)) +
+  geom_histogram(bins=20)
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+
+#### Shares
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=shares) +
+  geom_histogram(bins=20)
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(shares)) +
+  geom_histogram(bins=20)
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+
+
+#### Brand Awareness
+
+Tae also proposed using the brand awareness as an output variable, which could be a nice twist to what was done on the paper:
+
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=page_ttl_likes) +
+  geom_histogram(bins=20)
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(page_ttl_likes)) +
+  geom_histogram(bins=20)
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+
+### Explanatory variables
+
+The paper uses 7 variables to try to explain 12 outcome ones (most of them explained above)
+
+
+#### Brand Awareness
+
+This would be the main variable we would like to understand the impact. It is expressed in the number of likes the FB page of the company had when the post was published:
+
+```{r}
+p1 = fb_data %>% ggplot() + 
+  aes(x=page_ttl_likes) + 
+  geom_histogram(bins=20, color="blue", fill="blue", alpha=0.5)
+
+p2 = fb_data %>% ggplot() + 
+  aes(x=page_ttl_likes, y=lifetime_engaged_users) + 
+  geom_point(alpha=0.3, fill="blue", color="blue")
+
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+Surprisingly, it displays a low negative correlation, although it may be the case that the relationship is not linear:
+```{r}
+cor(fb_data$page_ttl_likes, fb_data$lifetime_engaged_users)
+```
+
+
+Running a simple linear regression of this, the coefficient is significant to 5% level (assuming homoscedasticity):
+
+```{r}
+mod = lm(lifetime_engaged_users ~ 1 + page_ttl_likes, data=fb_data)
+summary(mod)
+```
+
+Heteroscedastic test:
+
+```{r}
+coeftest(mod, vcov=vcovHC(mod, type="HC1"))
+```
+
+A log-level model the coeff is very signficant:
+
+```{r}
+loglev_mod = lm(I(log(lifetime_engaged_users)) ~ 1 + page_ttl_likes, data=fb_data)
+summary(loglev_mod)
+```
+
+And the heteroscedastic test:
+```{r}
+coeftest(loglev_mod, vcov=vcovHC(loglev_mod, type="HC1"))
+```
+
+
+Same with the log-log model. This may be better as it is easier to interpret:
+
+```{r}
+loglog_mod = lm(I(log(lifetime_engaged_users)) ~ 1 + I(log(page_ttl_likes)), data=fb_data)
+summary(loglog_mod)
+```
+
+
+And the hetesk test:
+```{r}
+coeftest(loglog_mod, vcov=vcovHC(loglog_mod, type="HC1"))
+```
+
+#### Category
+
+This is the category of the post, related to the kind of content it has. Coded in 3 values:
+
+  1. Action: Special offers and contests
+  2. Inspiration: Direct advertisement, explicit brand content
+  3. Inspiration: Non-explicit brand related content
+
+```{r}
+p1 = fb_data %>% ggplot() + 
+  aes(x=category) + 
+  geom_bar(width=0.5, alpha=0.5, fill="blue", color="blue")
+
+p2 = fb_data %>% ggplot() + 
+  aes(x=category, y=lifetime_engaged_users) + 
+  geom_point(alpha=0.3, fill="blue", color="blue")
+
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+
+It has a very low correlation:
+```{r}
+cor(x=fb_data$category, y=fb_data$lifetime_engaged_users)
+```
+
+
+#### Type
+
+This is the type of the post, either Link, Photo, Status or Video. People mostly post photos:
+
+```{r}
+p1 = fb_data %>% ggplot() + 
+  aes(x=type) + 
+  geom_bar(width=0.5, alpha=0.5, fill="blue", color="blue")
+
+p2 = fb_data %>% ggplot() + 
+  aes(x=type, y=lifetime_engaged_users) + 
+  geom_point(alpha=0.3, fill="blue", color="blue")
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+#### Month
+
+Month when the post was published (1-12). The company mostly posted in October:
+
+```{r}
+fb_data %>% ggplot() + 
+  aes(x=post_month) + 
+  geom_bar(width=0.5, alpha=0.5, fill="blue", color="blue")
+```
+
+
+#### Day of week
+
+Day of the week when the post was published (1-7, 1=Sunday). The company posted mostly during Fri and Sat:
+
+```{r}
+fb_data %>% ggplot() + 
+  aes(x=post_wkday) + 
+  geom_bar(width=0.5, alpha=0.5, fill="blue", color="blue")
+```
+
+
+#### Post hour
+
+The hour of the day the post was published (1-24). Compay posted mostly at 3am and 10am:
+
+```{r}
+fb_data %>% ggplot() + 
+  aes(x=post_hour) + 
+  geom_bar(width=0.5, alpha=0.5, fill="blue", color="blue")
+```
