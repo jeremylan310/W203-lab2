@@ -1,0 +1,171 @@
+WKT,name,description
+"POLYGON ((-87.691839 42.073388, -87.691836 42.072041, -87.690729 42.072032, -87.691239 42.072841, -87.691535 42.07313, -87.691671 42.07318, -87.691677 42.073387, -87.691839 42.073388))",Linden,        
+   Field Name   Field Value    
+   OBJECTID   1    
+   Station Name   Linden    
+   Rail Line   Purple Line, Evanston Express    
+   Address   349 W. Linden Avenue    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   328    
+   SHAPE.AREA   85181.495405    
+   SHAPE.LEN   1409.998258          
+"POLYGON ((-87.860537 41.985953, -87.860604 41.985926, -87.860742 41.985284, -87.860726 41.985234, -87.86061 41.985215, -87.860613 41.985159, -87.859966 41.985084, -87.859825 41.984866, -87.859782 41.984773, -87.859716 41.984722, -87.859899 41.983939, -87.859879 41.983918, -87.859143 41.983943, -87.858717 41.983993, -87.858435 41.984025, -87.858015 41.984102, -87.857444 41.984268, -87.857397 41.984551, -87.858392 41.984886, -87.85871 41.985011, -87.858978 41.985129, -87.859128 41.985219, -87.859588 41.985457, -87.860537 41.985953))",Rosemont,        
+   Field Name   Field Value    
+   OBJECTID   2    
+   Station Name   Rosemont    
+   Rail Line   Blue Line    
+   Address   5801 N. River Road    
+   Parking Cost   $5.00 for 14 Hrs. then varies    
+   Parking Spaces   798    
+   SHAPE.AREA   290323.989645    
+   SHAPE.LEN   2737.764908          
+"POLYGON ((-87.752564 42.040933, -87.752207 42.040818, -87.751934 42.039994, -87.752277 42.03991, -87.752055 42.039451, -87.75189 42.038831, -87.751438 42.037829, -87.751725 42.037754, -87.751617 42.037385, -87.751271 42.036336, -87.751225 42.036346, -87.751179 42.036235, -87.75038 42.035563, -87.750175 42.036091, -87.750862 42.037149, -87.750662 42.037191, -87.751004 42.037934, -87.750937 42.038155, -87.751751 42.040685, -87.752237 42.040924, -87.752363 42.041319, -87.752457 42.041316, -87.753289 42.044081, -87.753538 42.044039, -87.752564 42.040933))",Skokie,        
+   Field Name   Field Value    
+   OBJECTID   3    
+   Station Name   Skokie    
+   Rail Line   Yellow Line    
+   Address   5005 W. Dempster Street    
+   Parking Cost   $4.00 for 24 Hours    
+   Parking Spaces   441    
+   SHAPE.AREA   423341.726224    
+   SHAPE.LEN   6901.45157          
+"POLYGON ((-87.647669 41.846378, -87.647752 41.846378, -87.647767 41.846459, -87.64824 41.846229, -87.648187 41.84617, -87.648179 41.846114, -87.647669 41.846132, -87.64767 41.846264, -87.647669 41.846378))",Halsted/Archer,        
+   Field Name   Field Value    
+   OBJECTID   5    
+   Station Name   Halsted/Archer    
+   Rail Line   Orange Line    
+   Address   2520 S. Archer Avenue    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   31    
+   SHAPE.AREA   12482.305568    
+   SHAPE.LEN   481.094844          
+"POLYGON ((-87.809597 41.982092, -87.809642 41.982047, -87.809658 41.981933, -87.809643 41.981896, -87.80952 41.981851, -87.809327 41.981811, -87.809032 41.981731, -87.808808 41.981667, -87.808591 41.982049, -87.809061 41.982107, -87.809518 41.982107, -87.809597 41.982092))",Harlem,        
+   Field Name   Field Value    
+   OBJECTID   6    
+   Station Name   Harlem    
+   Rail Line   Blue Line (O'Hare)    
+   Address   5550 N. Harlem Avenue    
+   Parking Cost   $5.00 for 12 Hours    
+   Parking Spaces   53    
+   SHAPE.AREA   30880.369539    
+   SHAPE.LEN   745.36939          
+"POLYGON ((-87.72768 41.798887, -87.728089 41.798728, -87.728038 41.798555, -87.725352 41.799649, -87.725396 41.799763, -87.725445 41.799828, -87.726805 41.799334, -87.726892 41.799454, -87.727783 41.799102, -87.72768 41.798887))",Pulaski/51st,        
+   Field Name   Field Value    
+   OBJECTID   7    
+   Station Name   Pulaski/51st    
+   Rail Line   Orange Line    
+   Address   5106 S. Pulaski Road    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   390    
+   SHAPE.AREA   80249.820541    
+   SHAPE.LEN   1915.121696          
+"POLYGON ((-87.671966 42.01771, -87.671962 42.01807, -87.672298 42.018341, -87.67237 42.018287, -87.67284 42.018292, -87.672854 42.017305, -87.671966 42.01771))",Howard,        
+   Field Name   Field Value    
+   OBJECTID   8    
+   Station Name   Howard    
+   Rail Line   Red, Yellow, Purple, Evanston Express    
+   Address   7474 N Rogers    
+   Parking Cost   $4.00 daily    
+   Parking Spaces   592    
+   SHAPE.AREA   65646.69018    
+   SHAPE.LEN   1063.670945          
+"POLYGON ((-87.838137 41.984034, -87.838058 41.9831, -87.838026 41.98297, -87.837426 41.982613, -87.837321 41.982571, -87.837247 41.982559, -87.837185 41.982551, -87.837075 41.982549, -87.837003 41.98255, -87.836941 41.982563, -87.836914 41.982579, -87.836857 41.982633, -87.836869 41.982826, -87.836981 41.984091, -87.838137 41.984034))",Cumberland,        
+   Field Name   Field Value    
+   OBJECTID   9    
+   Station Name   Cumberland    
+   Rail Line   Blue Line    
+   Address   5800 N. Cumberland Avenue    
+   Parking Cost   $5.00 for 12 Hours    
+   Parking Spaces   1633    
+   SHAPE.AREA   158735.269079    
+   SHAPE.LEN   1616.955511          
+"POLYGON ((-87.684515 41.804358, -87.684765 41.804352, -87.684764 41.804423, -87.686648 41.804391, -87.686636 41.804035, -87.685127 41.804059, -87.685132 41.804219, -87.684773 41.804227, -87.684777 41.804278, -87.684513 41.804288, -87.684515 41.804358))",Western/49th,        
+   Field Name   Field Value    
+   OBJECTID   10    
+   Station Name   Western/49th    
+   Rail Line   Orange Line    
+   Address   4901 S. Western Avenue    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   200    
+   SHAPE.AREA   62467.699274    
+   SHAPE.LEN   1421.68932          
+"POLYGON ((-87.68002 41.829698, -87.680017 41.82949, -87.679122 41.830033, -87.679283 41.830171, -87.68002 41.829698))",35th/Archer,        
+   Field Name   Field Value    
+   OBJECTID   11    
+   Station Name   35th/Archer    
+   Rail Line   Orange Line    
+   Address   3528 S. Leavitt Street    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   69    
+   SHAPE.AREA   18163.82443    
+   SHAPE.LEN   721.272769          
+"POLYGON ((-87.663995 41.777749, -87.663062 41.777762, -87.663092 41.7786, -87.664018 41.778587, -87.663995 41.777749))",Ashland/63rd,        
+   Field Name   Field Value    
+   OBJECTID   12    
+   Station Name   Ashland/63rd    
+   Rail Line   Green Line (Englewood)    
+   Address   6315 S. Ashland Avenue    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   235    
+   SHAPE.AREA   77475.74896    
+   SHAPE.LEN   1118.229358          
+"POLYGON ((-87.738651 41.785745, -87.738683 41.785812, -87.739233 41.785996, -87.739926 41.784912, -87.73992 41.784446, -87.739831 41.784392, -87.739604 41.784462, -87.739384 41.784565, -87.739206 41.78478, -87.738643 41.785732, -87.738651 41.785745))",Midway,        
+   Field Name   Field Value    
+   OBJECTID   13    
+   Station Name   Midway    
+   Rail Line   Orange Line    
+   Address   4612 W. 59th Street    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   299    
+   SHAPE.AREA   104076.126715    
+   SHAPE.LEN   1443.914705          
+"POLYGON ((-87.705415 41.805593, -87.705733 41.805593, -87.705733 41.805285, -87.705748 41.805222, -87.705757 41.805161, -87.705772 41.805119, -87.705786 41.805064, -87.705807 41.805011, -87.705866 41.804947, -87.705897 41.804894, -87.705931 41.804846, -87.705945 41.804822, -87.705885 41.804809, -87.705905 41.804712, -87.70591 41.804667, -87.705839 41.804653, -87.70573 41.804648, -87.705633 41.804648, -87.705527 41.804645, -87.705449 41.804659, -87.705381 41.804676, -87.705323 41.804688, -87.705233 41.804691, -87.705261 41.805393, -87.705402 41.805388, -87.705415 41.805593))",Kedzie/48th,        
+   Field Name   Field Value    
+   OBJECTID   14    
+   Station Name   Kedzie/48th    
+   Rail Line   Orange Line    
+   Address   3243 W 48th Place    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   157    
+   SHAPE.AREA   48234.174258    
+   SHAPE.LEN   1006.396432          
+"POLYGON ((-87.712626 41.968029, -87.712585 41.967172, -87.71264 41.966557, -87.712672 41.966505, -87.71269 41.96638, -87.712634 41.966325, -87.712587 41.966285, -87.712484 41.966274, -87.712374 41.966299, -87.712303 41.966368, -87.712296 41.966413, -87.712317 41.966464, -87.71238 41.966727, -87.71243 41.96747, -87.712454 41.968036, -87.712626 41.968029))",Kimball,        
+   Field Name   Field Value    
+   OBJECTID   15    
+   Station Name   Kimball    
+   Rail Line   Brown Line    
+   Address   4755-57 N. Kimball Avenue    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   73    
+   SHAPE.AREA   37598.019701    
+   SHAPE.LEN   1397.101793          
+"POLYGON ((-87.619056 41.796048, -87.619025 41.795286, -87.618446 41.795287, -87.618466 41.796052, -87.619056 41.796048))",Garfield,        
+   Field Name   Field Value    
+   OBJECTID   16    
+   Station Name   Garfield    
+   Rail Line   Green Line    
+   Address   5419-49 S. Prairie Ave.    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   117    
+   SHAPE.AREA   44321.468839    
+   SHAPE.LEN   875.100485          
+"GEOMETRYCOLLECTION (POLYGON ((-87.74934 41.851792, -87.749348 41.851836, -87.751276 41.851848, -87.751737 41.851871, -87.751994 41.851867, -87.753612 41.851834, -87.753613 41.851735, -87.74934 41.851792)), POLYGON ((-87.762079 41.851629, -87.762077 41.851796, -87.763805 41.851769, -87.763787 41.851601, -87.762079 41.851629)), POLYGON ((-87.759811 41.851748, -87.759546 41.851781, -87.759138 41.851833, -87.759137 41.851943, -87.760172 41.85194, -87.760147 41.851745, -87.76 41.851743, -87.759811 41.851748)), POLYGON ((-87.75915 41.851638, -87.75915 41.851732, -87.759411 41.851733, -87.759412 41.851639, -87.75915 41.851638)))",54/Cermak,        
+   Field Name   Field Value    
+   OBJECTID   17    
+   Station Name   54/Cermak    
+   Rail Line   Pink Line    
+   Address   Cermak &amp; Central Ave    
+   Parking Cost   $4.00 for 12 Hours    
+   Parking Spaces   175    
+   SHAPE.AREA   83901.660355    
+   SHAPE.LEN   4318.343615          
+"POLYGON ((-87.818679 41.874778, -87.819086 41.874809, -87.819149 41.874748, -87.819212 41.874753, -87.822856 41.875064, -87.822857 41.874887, -87.819097 41.874556, -87.819015 41.874568, -87.818679 41.874778))",Forest Park,        
+   Field Name   Field Value    
+   OBJECTID   18    
+   Station Name   Forest Park    
+   Rail Line   Blue Line    
+   Address   711 S. Des Plaines Avenue    
+   Parking Cost   $5.00 for 12 Hours    
+   Parking Spaces   1051    
+   SHAPE.AREA   73831.787185    
+   SHAPE.LEN   2393.104061          
