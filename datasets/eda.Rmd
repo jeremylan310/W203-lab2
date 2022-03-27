@@ -9,9 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Research paper using this dataset here: http://www.math-evry.cnrs.fr/_media/members/aguilloux/enseignements/m1mint/moro2016.pdf
+
 ## Imports
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
