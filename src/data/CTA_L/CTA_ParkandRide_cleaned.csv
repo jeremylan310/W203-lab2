@@ -1,0 +1,16 @@
+Address,Parking Spaces,Station Name,OBJECTID,SHAPE.AREA,Parking Cost,Rail Line,SHAPE.LEN
+349 W. Linden Avenue,328,Linden,1,85181.495405,$4.00 for 12 Hours,Purple Line,1409.998258
+5801 N. River Road,798,Rosemont,2,290323.989645,$5.00 for 14 Hrs. then varies,Blue Line,2737.764908
+5005 W. Dempster Street,441,Skokie,3,423341.726224,$4.00 for 24 Hours,Yellow Line,6901.45157
+2520 S. Archer Avenue,31,Halsted/Archer,5,12482.305568,$4.00 for 12 Hours,Orange Line,481.094844
+5550 N. Harlem Avenue,53,Harlem,6,30880.369539,$5.00 for 12 Hours,Blue Line (O'Hare),745.36939
+5106 S. Pulaski Road,390,Pulaski/51st,7,80249.820541,$4.00 for 12 Hours,Orange Line,1915.121696
+7474 N Rogers,592,Howard,8,65646.69018,$4.00 daily,Red,1063.670945
+5800 N. Cumberland Avenue,1633,Cumberland,9,158735.269079,$5.00 for 12 Hours,Blue Line,1616.955511
+4901 S. Western Avenue,200,Western/49th,10,62467.699274,$4.00 for 12 Hours,Orange Line,1421.68932
+3528 S. Leavitt Street,69,35th/Archer,11,18163.82443,$4.00 for 12 Hours,Orange Line,721.272769
+6315 S. Ashland Avenue,235,Ashland/63rd,12,77475.74896,$4.00 for 12 Hours,Green Line (Englewood),1118.229358
+4612 W. 59th Street,299,Midway,13,104076.126715,$4.00 for 12 Hours,Orange Line,1443.914705
+3243 W 48th Place,157,Kedzie/48th,14,48234.174258,$4.00 for 12 Hours,Orange Line,1006.396432
+4755-57 N. Kimball Avenue,73,Kimball,15,37598.019701,$4.00 for 12 Hours,Brown Line,1397.101793
+Cermak &amp; Central Ave,175,54/Cermak,17,83901.660355,$4.00 for 12 Hours,Pink Line,4318.343615
