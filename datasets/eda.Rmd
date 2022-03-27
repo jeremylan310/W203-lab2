@@ -1,7 +1,5 @@
 ---
 title: "EDA"
-author: "group2"
-date: '2022-03-27'
 output: html_document
 ---
 
@@ -9,7 +7,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Research paper using this dataset here: http://www.math-evry.cnrs.fr/_media/members/aguilloux/enseignements/m1mint/moro2016.pdf
+Research paper here: http://www.math-evry.cnrs.fr/_media/members/aguilloux/enseignements/m1mint/moro2016.pdf
+
+Dataset here: https://archive-beta.ics.uci.edu/ml/datasets/facebook+metrics
 
 ## Imports
 
@@ -55,6 +55,8 @@ colnames(fb_data) = cols
 
 summary(fb_data)
 ```
+
+## EDA
 
 ### Output variables
 
