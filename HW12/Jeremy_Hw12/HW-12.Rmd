@@ -1,0 +1,120 @@
+---
+title: "HW week 12"
+author: "w203 teaching team"
+subtitle: 'w203: Statistics for Data Science'
+
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r load packages, message = FALSE}
+library(tidyverse)
+library(ggplot2) 
+
+
+library(sandwich)
+library(stargazer)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r source functions from project, echo = FALSE}
+source('./src/load_and_clean.R')
+source('./src/get_robust_se.R')
+```
+
+```{r load data} 
+d <- load_and_clean(input = 'videos.txt')
+```
+# Regression analysis of YouTube dataset
+
+You want to explain how much the quality of a video affects the number of views it receives on social media. In a world where people can now buy followers and likes, would such an investment increase the number of views that their content receives?  **This is a causal question.** 
+
+You will use a dataset created by Cheng, Dale and Liu at Simon Fraser University.  It includes observations about 9618 videos shared on YouTube.  Please see [this link](http://netsg.cs.sfu.ca/youtubedata/) for details about how the data was collected.
+
+You will use the following variables:
+
+- `views`: the number of views by YouTube users.
+- `average_rating`: This is the average of the ratings that the video received, it is a renamed feature from `rate` that is provided in the original dataset. (Notice that this is different from `cout_of_ratings` which is a count of the total number of ratings that a video has received. 
+- `length:` the duration of the video in seconds.
+
+a. Perform a brief exploratory data analysis on the data to discover patterns, outliers, or wrong data entries and summarize your findings.
+
+```{r conduct EDA in this chunk}
+ggplot(d, aes(y=views, x=average_rating)) + geom_point() + geom_smooth()
+ggplot(d, aes(y=views, x=length)) + geom_point() + geom_smooth()
+hist(d$average_rating)
+
+
+attach(d)
+hist(log(length))
+```
+
+- remove NAs as we do see some entries (only 9).
+
+```{r}
+d2 <- na.omit(d)
+#is.na(d)
+nrow(d)
+nrow(d2)
+```
+
+- Scatterplot of views and average_rating, we can observe visually that not many low-rating videos had high view counts, while more high-rated videos had higher view counts. However, there were also many videos with low view counts across all rating scores, which makes sense as there can be some videos with only a few ratings- 
+- Most videos got closer to zero views, so using the log(length) transformation which yields a more normal distribution will be more desirable for our model purposes.
+
+
+b. Based on your EDA, select an appropriate variable transformation (if any) to apply to each of your three variables.  You will fit a model of the type,
+
+$$
+  f(\text{views}) = \beta_0 + \beta_1 g(\text{rate})  + \beta_3 h(\text{length})
+$$ 
+
+Where $f$, $g$ and $h$ are sensible transformations, which might include making *no* transformation. 
+
+```{r fit a regression model here}
+model <- lm(log(views) ~ average_rating + log(length), data = d2)
+
+ stargazer(
+   model, 
+   type = 'text', 
+   se = list(get_robust_se(model))
+   )
+```
+
+
+
+c. Using diagnostic plots, background knowledge, and statistical tests, assess all five assumptions of the CLM. When an assumption is violated, state what response you will take.  As part of this process, you should decide what transformation (if any) to apply to each variable. Iterate against your model until your satisfied that at least four of the five assumption have been reasonably addressed. 
+
+> 1. **IID Data:** 
+- Not IID as there are many entries that are by the same uploader, so it's likely that some of these videos may have similar quality (affecting ratings, length, etc.) as well as similar view counts. New iteration of model --> can we group-by the uploader and calculate the average ratings, views, length, etc. of all of the uploader's videos? 
+- Besides that, we can assume some clustering between different categories of video which are hard to fully isolate from one another. 
+> 2. **No Perfect Colinearity:** Very low correlation between the input variables (average_rating and log(length)). 
+> 3. **Linear Conditional Expectation:** Residuals should be evenly distributed across the model prediction range - Indicating a linear conditional expectation for all variables. Observing the scatterplot between our y-variable (log(views)) and our x-variables (average_rating, log(length)) we can see that the residuals distribution appears to be linear. 
+
+```{r code and plots assessing linear conditional expectation}
+## remove this commented block and write code that can help you assess whether
+## your model satisfied the requirement of a linear conditional expectation. 
+ggplot(d2, aes(y=log(views), x=average_rating)) + geom_point() + geom_smooth()
+ggplot(d2, aes(y=log(views), x=log(length))) + geom_point() + geom_smooth()
+```
+
+> 4. **Homoskedastic Errors:** 'Replace this quote with what you are looking for when you are assessing homoskedastic errors. Also include what you observe in your plot. In the model that you have chosen to report, do you satisfy the assumption of homoskedastic errors?'
+
+```{r code and plots assessing error variance}
+## remove this commented block and write code that can help you assess whether 
+## your model satisfied the requirement of homoskedastic errors
+```
+
+> 5. **Normally Distributed Errors:** 'Replace this quote with what you are looking for when you are assessing the normality of your error distribution. Also include what you observe in your plot. In the model that you have chosen to report, do you satisfy the assumption of normally distributed errors?'
+
+```{r code and plots assessing normally distributed errors}
+## remove this commented block and write code that can help you assess whether 
+## your model satisfied the requirement of normally distributed errors
+plot(model)
+
+```
+
+Given the QQ plot, doesn't appear to have much deviation except at the extreme ends with minor bimodal tendency at the extremes (which makes sense given the large distribution of zero and 5 ratings.) What could be done to improve this assumption is to remove all zero-rating rows in our data, as these are likely low-volume videos that may be outliers. 
