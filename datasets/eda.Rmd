@@ -21,6 +21,7 @@ library(grid)
 library(gridExtra)
 library(sandwich) # need to install
 library(lmtest)   # need to install
+library(stargazer)
 ```
 
 ## Read data
@@ -360,4 +361,202 @@ fb_data %>% ggplot() +
 
 
 ## Models
+
+Before fitting the models, we need to remove NA's, as those bring issues down the line. The only variable with NA's we will include in the model is `paid`:
+
+```{r}
+fb_data_mod = fb_data %>%
+  filter(!is.na(paid))
+```
+
+### Basic model
+
+First we will try the basic model:
+
+```{r}
+model1 = lm(I(log(lifetime_engaged_users)) ~ 1 + day_period, data=fb_data_mod)
+summary(model1, vcov=vcovHC(model1, type="HC1"))
+```
+
+The evening period is only significant to the 0.1 level. We'll see the signficance with robust SEs:
+
+```{r}
+coeftest(model1, vcov=vcovHC(model1, type="HC1"))
+```
+
+The coefficients are now all signficant to the 0.05 level. 
+
+#### Assumptions
+
+Because we have more than 100 observations, we can apply the Large-Sample assumptions that are mainly 2:
+    - IID: This requisite is never completely satisfied, and this dataset is not the exception. The interactions of post in the past may affect newer posts for example. For the purposes of this analysis though, and following the analysis of Moro et al., we will assume that doesn't impede proceeding further with the study.
+    - BLP exists: The main requirement for this is that no perfect collinearity exists. R hasn't dropped any variables from the model or failed to run the regression, which is a sign that perfect collinearity doesn't exit.
+    
+Even though we only need those, we could check the other CLM requirements:
+
+    - Normal errors: Errors seem to be left skewed.
+
+```{r}
+fb_data_mod %>%
+  mutate(
+    mod1_predict = predict(model1),
+    mod1_resid = resid(model1)
+  ) %>%
+  ggplot(aes(x=mod1_resid)) + geom_histogram()
+```
+
+```{r}
+fb_data_mod %>%
+  mutate(
+    mod1_predict = predict(model1),
+    mod1_resid = resid(model1)
+  ) %>%
+  ggplot(aes(sample=mod1_resid)) + stat_qq() + stat_qq_line()
+```
+
+
+    - Linearity of expectations & Homoscedasticity: We can test this by looking into the Predicted vs Residuals graph. From the graph we see that a line might fit the relationship between the variables, but it is probably not homoscedastic.
+    
+```{r}
+fb_data_mod %>%
+  mutate(
+    mod1_predict = predict(model1),
+    mod1_resid = resid(model1)
+  ) %>%
+  ggplot(aes(x=mod1_predict, y=mod1_resid)) + geom_point() + geom_smooth()
+```
+
+We can test for homoscedasticity formally, and we found that the data is much likely NOT homoscedastic:
+
+```{r}
+library(lmtest)
+bptest(model1)
+```
+
+
+    
+### Adding Month and Weekday
+
+We can now run another model that includes the time of the day and month as factors. This mainly to control for how the people may behave in different times of the year. These variables will be included as factors, as their interpretation is not metric:
+
+```{r}
+model2 = lm(I(log(lifetime_engaged_users)) ~ 1 + 
+                           day_period + factor(post_month) + factor(post_wkday)
+                         , data=fb_data_mod)
+coeftest(model2, vcov=vcovHC(model2, type="HC1"))
+```
+
+Hmmm...doing so makes our variables not significant, which may be a problem.
+
+Let's try to add only wkday first:
+
+```{r}
+model3 = lm(I(log(lifetime_engaged_users)) ~ 1 + 
+                           day_period + factor(post_wkday)
+                         , data=fb_data_mod)
+coeftest(model3, vcov=vcovHC(model3, type="HC1"))
+```
+
+Seems like weekday doesn't add a lot of context, none of the coefficients are significant. Running an F-test reveals the same:
+
+```{r}
+waldtest(model1, model3, vcov=vcovHC(model3, type="HC1"))
+```
+
+Let's see month:
+
+```{r}
+model4 = lm(I(log(lifetime_engaged_users)) ~ 1 + 
+                           day_period + factor(post_month)
+                         , data=fb_data_mod)
+coeftest(model4, vcov=vcovHC(model4, type="HC1"))
+```
+
+Ok, so month is the variable introducing all these changes. An F-test indicates that the model is appropriate. Should we include `month` in the analysis then?
+
+```{r}
+waldtest(model1, model4, vcov=vcovHC(model4, type="HC1"))
+```
+
+
+### Adding Paid, Type and Category
+
+Now we want to add paid, type and category:
+
+```{r}
+model5 = lm(I(log(lifetime_engaged_users)) ~ 1 + 
+                           day_period + paid + factor(category) + type
+                         , data=fb_data_mod)
+coeftest(model5, vcov=vcovHC(model5, type="HC1"))
+```
+
+All variables are significant. Coefficients remain robust to new variables, keeping a similar sign and magnitude.
+
+Run an F-test to see if the model is worth it and it is to the 0.05 level:
+
+```{r}
+waldtest(model1, model5, vcov=vcovHC(model5, type="HC1"))
+```
+
+
+
+### Summary so far
+
+Take into account this table doesn't have robust SEs:
+
+```{r}
+stargazer(
+  model1, model2, model3, model4, model5,
+  type="text"
+)
+```
+
+
+One issue we have with this is that we have a very low R2 (~10%). We need another variable that can explain this better.
+
+
+### Add Brand Awareness
+
+```{r}
+model6 = lm(I(log(lifetime_engaged_users)) ~ 1 + 
+                           day_period + 
+                           paid + factor(category) + type +
+                           page_ttl_likes
+                         , data=fb_data_mod)
+coeftest(model6, vcov=vcovHC(model6, type="HC1"))
+```
+
+
+The variable comes in very significant and reduces all the other coefficients significantly and the model is appropriate:
+
+```{r}
+waldtest(model5, model6, vcov=vcovHC(model6, type="HC1"))
+```
+
+The R2 improves significantly, but it is still low (~25%):
+```{r}
+summary(model6)
+```
+
+
+
+### Include ALL
+
+One last test including all the variables we discussed:
+
+```{r}
+model_all = lm(I(log(lifetime_engaged_users)) ~ 1 + 
+                           day_period + 
+                           factor(post_month) + factor(post_wkday) +
+                           paid + factor(category) + type +
+                           page_ttl_likes
+                         , data=fb_data_mod)
+coeftest(model_all, vcov=vcovHC(model_all, type="HC1"))
+```
+
+
+
+
+
+
 
