@@ -17,6 +17,8 @@ library(stargazer)
 
 library(grid)
 library(gridExtra)
+
+library(corrplot)
 ```
 
 ```{r setup, include=FALSE}
@@ -49,14 +51,16 @@ a. Perform a brief exploratory data analysis on the data to discover patterns, o
 summary(d)
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 views_hist = d %>% ggplot() +
   aes(x=views) +
-  geom_histogram()
+  geom_histogram() +
+  labs(x="Views")
 
 views_bp = d %>% ggplot() +
   aes(x=views) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(x="Views")
 
 logviews_hist = d %>% ggplot() +
   aes(x=log(views)) +
@@ -75,22 +79,26 @@ grid.arrange(views_hist, views_bp,
 ```
 
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 rating_hist = d %>% ggplot() +
   aes(x=average_rating) +
-  geom_histogram()
+  geom_histogram() +
+  labs(x="Avg. Rating")
 
 rating_bp = d %>% ggplot() +
   aes(x=log(average_rating)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(x="Avg. Rating")
 
 lrating_hist = d %>% ggplot() +
   aes(x=log(average_rating)) +
-  geom_histogram()
+  geom_histogram() +
+  labs(x="Log of Avg. Rating")
 
 lrating_bp = d %>% ggplot() +
   aes(x=log(average_rating)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(x="Log of Avg. Rating")
 
 grid.arrange(rating_hist, rating_bp,
              lrating_hist, lrating_bp,
@@ -98,22 +106,26 @@ grid.arrange(rating_hist, rating_bp,
              top="Distribution and boxplot of Avg. Rating")
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 length_hist = d %>% ggplot() +
   aes(x=length) +
-  geom_histogram()
+  geom_histogram() +
+  labs(x="Length")
 
 length_bp = d %>% ggplot() +
   aes(x=length) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(x="Length")
 
 llength_hist = d %>% ggplot() +
   aes(x=log(length)) +
-  geom_histogram()
+  geom_histogram() +
+  labs(x="Log of Length")
 
 llength_bp = d %>% ggplot() +
   aes(x=log(length)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(x="Log of Length")
 
 grid.arrange(length_hist, length_bp,
              llength_hist, llength_bp,
@@ -143,22 +155,34 @@ Where $f$, $g$ and $h$ are sensible transformations, which might include making 
 
 ```{r fit a regression model here}
 model <- lm(I(log(views)) ~ 1 + average_rating + I(log(length)), data=d_clean)
-
+```
+```{r results='asis'}
 stargazer(
   model, 
-  type = 'text', 
-  se = list(get_robust_se(model)))
+  title="Linear regression for YouTube views",
+  se = list(get_robust_se(model)),
+  dep.var.labels=c("Log of views"),
+  covariate.labels=c("Avg. Rating", "Log of Length"),
+  type="latex",
+  header=FALSE
+  )
 ```
+
 
 
 
 c. Using diagnostic plots, background knowledge, and statistical tests, assess all five assumptions of the CLM. When an assumption is violated, state what response you will take.  As part of this process, you should decide what transformation (if any) to apply to each variable. Iterate against your model until your satisfied that at least four of the five assumption have been reasonably addressed. 
 
-> 1. **IID Data:** This condition is rarely met perfectly and this is not the exception. Videos from the same author or YouTube channel, or in the same language are most likely not indepdendent from one other. With that said, given the randomness of the sample process from the authors, we can assume this condition to be met. 
-> 2. **No Perfect Colinearity:** We can see that R hasn't dropped any of our variables in the model or failed to run the regression. This means that the $X$ matrix is invertible, thus no perfect colinearity exists and the BLP exists.
+> 1. **IID Data:** This condition is rarely met perfectly and this is not the exception. First of all, the way in which the data was collected is not completely random. The videos were selected by looking into YouTube's most popular uploads and initiating a breadth depth search to look into the related videos section of those. This means that the data will potentially have more popular than non popular videos as a starting point. Also, given that the video selection is done from the related videos section, there probably other similarities between the videos selected such as being from the same author or YouTube channel, or in the same language which will create some dependencies or clustering among them. 
+> 2. **No Perfect Collinearity:** We can see that R hasn't dropped any of our variables in the model or failed to run the regression. This means that the $X$ matrix is invertible, thus no perfect colinearity exists and the BLP exists. We can also see that there is a low correlation between all the explanatory variables:
+
+```{r}
+corrplot(cor(d_clean[c("views", "average_rating", "length")]), method="number")
+```
+
 > 3. **Linear Conditional Expectation:** For this assumption, we can check the predicted vs residuals graph and see if the pattern we see is linear or not. Given the graph below with the smooth curve, we see that for almost the whole range of values, the relationship is linear. Nevertheless, after the cutoff value of 8, the relationship becomes less clear. Given the low density of points in this range of values, we can assume for the relationship to be linear. 
 
-```{r code and plots assessing linear conditional expectation}
+```{r message=FALSE, warning=FALSE}
 d_mod = d_clean %>%
   mutate(
     model_preds=predict(model),
@@ -176,7 +200,7 @@ d_mod %>%
 
 > Given the low number of variables in the model, we could also check the scatter plots to see if the pattern across the outcome and indepdent variables appears linear as well. We can see that in both cases a line could potentially capture well the relationship for both variables, strengthening the theory that this condition is satisfied:
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 rate_scat = d_mod %>%
   ggplot() +
   aes(x=average_rating, y=log(views)) +
@@ -195,7 +219,7 @@ grid.arrange(rate_scat, len_scat, ncol=2, top="Scatter plots for Avg. rating and
 
 > 4. **Homoskedastic Errors:** For this condition to be met we need to check if the conditional variance is constant, meaning that the spread of the residuals is the same across all range of predicted values. In the graph below, we see that this is the case for the ranges of values with the highest density, but towards the extreme values, the standard errors become bigger. Given the low density on the range of values we see this isn't met, we can attribute this to the sampling variation, and assume this condition to be satisfied. 
 
-```{r code and plots assessing error variance}
+```{r message=FALSE, warning=FALSE}
 d_mod %>%
   ggplot(aes(x=model_preds, y=model_resids)) +
   geom_point(alpha=0.05) +
@@ -215,7 +239,7 @@ bptest(model)
 
 > 5. **Normally Distributed Errors:** Here we are looking for the residuals of the model to be Normally distributed with $\mu=0$. Given the distribution and QQPlot of the residuals from the below, we can say that besides a small deviation on the smaller quantiles of the distribution, this is most likely the case and thus the model complies with this requirement.
 
-```{r code and plots assessing normally distributed errors}
+```{r message=FALSE, warning=FALSE}
 resid_hist = d_mod %>% ggplot(aes(x=model_resids)) + 
   geom_histogram()
 

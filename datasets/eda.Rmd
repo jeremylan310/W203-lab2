@@ -556,7 +556,18 @@ coeftest(model_all, vcov=vcovHC(model_all, type="HC1"))
 
 
 
+```{r}
+model_inter = lm(I(log(lifetime_engaged_users)) ~ 1 + 
+                           day_period + 
+                           paid + factor(category) + type +
+                           page_ttl_likes + factor(category)*type
+                         , data=fb_data_mod)
+coeftest(model_inter, vcov=vcovHC(model_inter, type="HC1"))
+```
 
 
 
+```{r}
+waldtest(model5, model_inter, vcov=vcovHC(model_inter, type="HC1"))
+```
 
