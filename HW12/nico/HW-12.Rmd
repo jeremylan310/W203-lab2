@@ -1,7 +1,6 @@
 ---
-title: "HW week 12"
-author: "w203 teaching team"
-subtitle: 'w203: Statistics for Data Science'
+title: "W203 - Assignment 12"
+author: "Group 2: Taehun Kim, Jeremy Lan, Nicolas Loffreda"
 
 output:
   pdf_document: default
