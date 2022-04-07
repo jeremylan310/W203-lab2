@@ -1,0 +1,196 @@
+---
+title: "HW week 11"
+author: "Group 2: Jeremy Lan, Taehun Kim, Nicolas Loffreda"
+subtitle: 'w203: Statistics for Data Science'
+
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# imports
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(sandwich) # need to install
+library(lmtest)   # need to install
+library(stargazer)
+
+# read data
+fb_data = read_delim("./datasets/dataset_Facebook.csv", delim=";")
+
+# change col names
+cols = c(
+  "page_ttl_likes",
+  "type",
+  "category",
+  "post_month",
+  "post_wkday",
+  "post_hour",
+  "paid",
+  "lifetime_post_reach",
+  "lifetime_post_impressions",
+  "lifetime_engaged_users",
+  "lifetime_post_consumers",
+  "lifetime_post_consumptions",
+  "lifetime_post_impressions_from_page_have_likeds",
+  "lifetime_post_impressions_from_page_likes",
+  "lifetime_people_liked_engaged_with_post",
+  "comments",
+  "likes",
+  "shares",
+  "interactions"
+)
+colnames(fb_data) = cols
+
+fb_data = fb_data %>%
+  mutate(
+    day_period=case_when(
+      post_hour >= 1  & post_hour <= 5  ~ "overnight",
+      post_hour >= 6  & post_hour <= 11 ~ "morning",
+      post_hour >= 12 & post_hour <= 17 ~ "afternoon",
+      post_hour >= 18 & post_hour <= 23 ~ "evening"
+    ),
+    category_str = case_when(
+      category == 1 ~ "action",
+      category == 2 ~ "product",
+      category == 3 ~ "inspiration"
+    )
+  ) %>%
+  filter(!is.na(paid))
+
+
+```
+
+## 2. Data
+
+The dataset we will be using for this analysis is a subset of that collected by Moro et al. (2016). The dataset contains a representative sample of 500 Facebook posts from a worldwide renowned cosmetic brand, collected between January 1st and December 31st of 2014. By the time the data was collected, Facebook was the most used social website, with roughly 1.28 billion monthly active users (Insights 2014). 
+
+Each observation from the dataset represents a post from this company, for which a variety of features have been collected.
+
+### 2.1 Engaged users
+
+The outcome variable will be the number of unique *engaged users* the post had through its lifetime. An engaged user is defined as someone who clicked in the post. Looking into this variable, we can see that it is fairly skewed to the right. To make the variable easier to work with, we will be applying a log transformation:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+p1 = fb_data %>% ggplot() +
+  aes(x=lifetime_engaged_users) +
+  geom_histogram(bins=20, alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Engaged Users")
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(lifetime_engaged_users)) +
+  geom_histogram(bins=20, alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Lof of Engaged Users")
+
+pb = fb_data %>% ggplot() +
+  aes(x=lifetime_engaged_users) +
+  geom_boxplot(alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Engaged users")
+
+pb2 = fb_data %>% ggplot() +
+  aes(x=log(lifetime_engaged_users)) +
+  geom_boxplot(alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Log of Engaged Users")
+
+grid.arrange(p1, pb, p2, pb2, ncol=2, nrow=2, top="Histogram and boxplot for the post's engaged users (normal and log)")
+```
+
+
+### 2.2 Category and Type
+The main variables we want to measure the impact on engaged users are the `type` and `category` of the post. The `type` is categorized in Photo, Video, Link or Status, and it represents what kind of content the post contained. We can see that most of the posts published were photos:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+fb_data %>% ggplot() + 
+  aes(x=type) + 
+  geom_bar(width=0.5, alpha=0.4, fill="blue", color="blue") +
+  labs(
+    title="Counts of posts by type",
+    x="Post Type"
+  )
+```
+
+On the other hand, the category describes how the content of the post was displayed to the user. There were 3 distinct categories the dataset differentiates:
+  - Action: Special offers and contests
+  - Product: Direct advertisement or explicit brand content
+  - Inspiration: Non-explicit brand related content
+
+The number of posts published of each category are as follows:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+fb_data %>% ggplot() + 
+  aes(x=category_str) + 
+  geom_bar(alpha=0.4, width=0.5, fill="blue", color="blue") +
+  labs(
+    title="Number of posts by category",
+    x="Post Category"
+  )
+```
+
+
+### 2.3 Covariates
+
+#### 2.3.1 Paid
+
+Among the covariates we will be including in the model is paid advertising. The variable `paid` will be encoded as a dummy variable to indicate whether the post had any paid media associated with it or not. We can see that 28% of all the posts had some kind of paid media support:
+
+
+\begin{center}
+  Paid media support
+\end{center}
+
+\begin{center}
+  \begin{tabular}{l r}
+    \hline
+    Media Support   & Number of posts \\
+    \hline
+    No Paid support & 360             \\
+    Paid support    & 139             \\
+    \hline
+    Total           & 499             \\
+    \hline
+  \end{tabular}
+\end{center}
+
+Something to notice as well is that `paid` has a missing value. Given the large number of samples still remaining we removed that missing value leaving a total of 499 observations.
+
+
+#### 2.3.2 Brand Awareness
+
+Another important control variable will be Brand Awareness. This variable represents how much users are aware or the brand. As it is a difficult concept to measure, we will be accounting for this as the number of likes the Facebook site of the company had at the time that the post was published:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ba_plot1 = fb_data %>% ggplot() + 
+  aes(x=page_ttl_likes) + 
+  geom_histogram(bins=20, color="blue", fill="blue", alpha=0.5) +
+  labs(
+    x="Brand Awareness"
+  )
+
+ba_plot2 = fb_data %>% ggplot() + 
+  aes(x=page_ttl_likes) + 
+  geom_boxplot(color="blue", fill="blue", alpha=0.5) +
+  labs(
+    x="Brand Awareness"
+  )
+
+grid.arrange(ba_plot1, ba_plot2, ncol=2, top="Distribution and BoxPlot of Total Likes on FB page (Brand Awareness)")
+```
+
+The variable is left skewed and although different transformations were applied to it, none of them helped to reduce the skeweness. For this, the variable will be included as is.
+
+
+#### 2.3.3 Period of day and Day of the week
+
+The last variables we will be including as control are the period of the day and day of the week. In particular, we will distinguish 4 periods of the day, overnight, morning, afternoon and evening. The first going from 12am to 6am, the second one from 6am to 12pm, then 12pm to 6pm, and 6pm to 12am. 
+
+On the other hand, the days of the week will be divided into weekdays and weekends.
+
+
