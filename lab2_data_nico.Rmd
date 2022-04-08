@@ -1,7 +1,6 @@
 ---
-title: "HW week 11"
+title: "Data & Modeling section for Lab2"
 author: "Group 2: Jeremy Lan, Taehun Kim, Nicolas Loffreda"
-subtitle: 'w203: Statistics for Data Science'
 
 output:
   pdf_document: default
@@ -192,5 +191,11 @@ The variable is left skewed and although different transformations were applied 
 The last variables we will be including as control are the period of the day and day of the week. In particular, we will distinguish 4 periods of the day, overnight, morning, afternoon and evening. The first going from 12am to 6am, the second one from 6am to 12pm, then 12pm to 6pm, and 6pm to 12am. 
 
 On the other hand, the days of the week will be divided into weekdays and weekends.
+
+
+## 3. Model
+
+### 3.1 Base Model
+
 
 
