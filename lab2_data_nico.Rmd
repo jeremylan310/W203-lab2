@@ -1,10 +1,11 @@
 ---
 title: "Data & Modeling section for Lab2"
 author: "Group 2: Jeremy Lan, Taehun Kim, Nicolas Loffreda"
-
+header-includes:
+  \usepackage{longtable}
+  \usepackage{dcolumn}
 output:
   pdf_document: default
-  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -51,16 +52,20 @@ colnames(fb_data) = cols
 
 fb_data = fb_data %>%
   mutate(
-    day_period=case_when(
-      post_hour >= 1  & post_hour <= 5  ~ "overnight",
-      post_hour >= 6  & post_hour <= 11 ~ "morning",
-      post_hour >= 12 & post_hour <= 17 ~ "afternoon",
-      post_hour >= 18 & post_hour <= 23 ~ "evening"
-    ),
     category_str = case_when(
-      category == 1 ~ "action",
-      category == 2 ~ "product",
-      category == 3 ~ "inspiration"
+      category == 1 ~ "Action",
+      category == 2 ~ "Product",
+      category == 3 ~ "Inspiration"
+    ),
+    period_of_day=case_when(
+      post_hour >= 1  & post_hour <= 5  ~ "Overnight",
+      post_hour >= 6  & post_hour <= 11 ~ "Morning",
+      post_hour >= 12 & post_hour <= 17 ~ "Afternoon",
+      post_hour >= 18 & post_hour <= 23 ~ "Evening"
+    ),
+    weekend=case_when(
+      post_wkday == 1 | post_wkday == 7 ~ 1,
+      TRUE                              ~ 0
     )
   ) %>%
   filter(!is.na(paid))
@@ -188,14 +193,176 @@ The variable is left skewed and although different transformations were applied 
 
 #### 2.3.3 Period of day and Day of the week
 
-The last variables we will be including as control are the period of the day and day of the week. In particular, we will distinguish 4 periods of the day, overnight, morning, afternoon and evening. The first going from 12am to 6am, the second one from 6am to 12pm, then 12pm to 6pm, and 6pm to 12am. 
+The last variables we will be including as control are the period of the day and the day of the week the post was published to account for the differences that may exist on user activity at different times and days. 
 
-On the other hand, the days of the week will be divided into weekdays and weekends.
+In particular, we will distinguish 4 periods of the day, overnight, morning, afternoon and evening. The first going from 12am to 6am, the second one from 6am to 12pm, then 12pm to 6pm, and 6pm to 12am. 
+
+On the other hand, the days of the week will be divided into weekdays and weekends. This will be encoded in a dummy set to 1 if the period is a weekend.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+pod_plot = fb_data %>% ggplot() + 
+  aes(x=period_of_day) + 
+  geom_bar(width=0.5, color="blue", fill="blue", alpha=0.5) +
+  labs(
+    x="Period of the day"
+  )
+
+wd_plot = fb_data %>% ggplot() + 
+  aes(x=weekend) + 
+  geom_bar(width=0.5, color="blue", fill="blue", alpha=0.5) +
+  labs(
+    x="Weekend"
+  )
+
+grid.arrange(pod_plot, wd_plot, ncol=2, top="Distribution for  period of day and weekends")
+```
+
 
 
 ## 3. Model
 
 ### 3.1 Base Model
+
+As explained in the data section, we will be applying a log transformation to the outcome variable, engaged users. The base model will only include type and category as main explanatory variables:
+
+\(
+\widehat{engaged\_users}=\beta_0 + \beta_1 \text{ } type + \beta_2 \text{ } category
+\)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+base_model = lm(log(lifetime_engaged_users) ~ 1 + 
+                  type + category_str
+                , data=fb_data)
+```
+
+
+### 3.2 Adding Covariates
+
+With the base model established, we will be including as control variables paid media efforts, brand awareness, day of the week and period of the day. All these as described on the data section:
+
+\(
+\widehat{engaged\_users}=\beta_0 + \beta_1 \text{ } type + \beta_2 \text{ } category + \beta_3 \text{ } paid + \beta_4 \text{ } brand\_awareness + \beta_5 \text{ } day\_of\_week + \beta_6 \text{ } period\_of\_day
+\)
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+covar_model = lm(log(lifetime_engaged_users) ~ 1 + 
+                   type + category_str +
+                   paid + page_ttl_likes + 
+                   period_of_day + weekend
+                 , data=fb_data)
+```
+
+### 3.3 Adding covariates
+
+As a next model, we will be including an interaction term to account to see how the different types behave when paired with the different categories:
+
+\(
+\widehat{engaged\_users}=\beta_0 + \beta_1 \text{ } type + \beta_2 \text{ } category + \beta_3 \text{ } paid + \beta_4 \text{ } brand\_awareness + \beta_5 \text{ } day\_of\_week + \beta_6 \text{ } period\_of\_day
+\)
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+inter_model = lm(log(lifetime_engaged_users) ~ 1 + 
+                  type*category_str + 
+                  paid + page_ttl_likes + 
+                  period_of_day + weekend 
+                ,data=fb_data)
+```
+
+
+### 3.4 Standard Errors
+
+We understand that certain dependencies may exist among the posts given that they are all from the same company. This means that the people that know the brand and interact with the social site and posts may be similar on the different posts.
+
+Because of this reason, we will be using *robust clustered standard errors* to adjust the significance for any independence that may exist.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Standard Errors
+base_model_clse = coeftest(base_model, vcov=vcovCL)[, "Std. Error"]
+covar_model_clse = coeftest(covar_model, vcov=vcovCL)[, "Std. Error"]
+inter_model_clse = coeftest(inter_model, vcov=vcovCL)[, "Std. Error"]
+
+# Coefficients
+base_model_coef = coeftest(base_model, vcov=vcovCL)[, "Estimate"]
+covar_model_coef = coeftest(covar_model, vcov=vcovCL)[, "Estimate"]
+inter_model_coef = coeftest(inter_model, vcov=vcovCL)[, "Estimate"]
+
+# Pvals
+base_model_p = coeftest(base_model, vcov=vcovCL)[, "Pr(>|t|)"]
+covar_model_p = coeftest(covar_model, vcov=vcovCL)[, "Pr(>|t|)"]
+inter_model_p = coeftest(inter_model, vcov=vcovCL)[, "Pr(>|t|)"]
+
+```
+
+
+## 4. Results
+
+Results of the models described are shown in the table below:
+
+
+```{r echo=FALSE, results='hide'}
+results = stargazer(
+  base_model,
+  covar_model,
+  inter_model,
+  coef= list(base_model_coef, covar_model_coef, inter_model_coef),
+  se = list(base_model_clse, covar_model_clse, inter_model_clse),
+  p = list(base_model_p, covar_model_p, inter_model_p),
+  dep.var.labels="log(Engaged Users)",
+  type="latex",
+  header=F,
+  omit.stat="f",
+  covariate.labels=c(
+    "Type - Photo",
+    "Type - Status",
+    "Type - Video",
+    "Category - Inspiration",
+    "Category - Product",
+    "Paid Media",
+    "Brand Awareness",
+    "Period - Evening",
+    "Period - Morning",
+    "Period - Overnight",
+    "Weekend",
+    "Interaction - Photo:Inspiration",
+    "Interaction - Status:Inspiration",
+    "Interaction - Video:Inspiration",
+    "Interaction - Photo:Product",
+    "Interaction - Status:Product",
+    "Interaction - Video:Product"
+  )
+)
+
+results[2] = "\\begin{longtable}{@{\\extracolsep{5pt}}lccc}"
+results[5] = ""
+results[length(results)] = ""
+results[length(results)-1] = gsub("tabular", "longtable", results[length(results)-1])
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+cat(paste0(results), sep = "\n")
+```
+
+
+All the different types of posts are significant to an $\alpha$ level of 0.05 in all the models, with Link being the omitted type. From the magnitude of the coefficients we can see that Video, Status and Photo perform much better than Link, with Status yielding the highest increase on engaged users. All these coefficients are quite stable across models as well. As for the categories, that none of them are significant at a 0.05 $\alpha$ level, although Inspiration is significant to 0.1 level with a positive coefficient.
+
+The second model includes the covariates paid, period of the day, weekday and brand awareness. We see that the results are similar to the base model. Some of the covariates come out as highly significant such as paid and brand awareness. Surprisingly, the coefficient of Brand Awareness is negative, implying an inverse directionality in the relationship between engaged users and brand awareness, which seems counter intuitive. Nevertheless, although the coefficient is significant, the magnitude seems to be very small and thus most likely doesn't have a real impact in the variable (i.e. not practically significant). At the same time, posting on weekends doesn't seem to be significant in any of the models, but some of the day periods are. Particularly, the Morning seems to be significant to a 0.05 level with a negative coefficient. This implies that the omitted period, Afternoon, is associated with the highest increase of engaged users.
+
+The Wald Test between the base and the covariate models yields a a very low p-value, meaning that some of the covariates are helping to explain the variability of the engaged users. This phenomenon can also be appreciated in the coefficient of determination (i.e. $R^2$), as it jumps from just above 16% in the first model, to 25% after the addition of the covariates. 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+waldtest(base_model, covar_model, vcov=vcovCL)
+```
+
+When looking at the model with the interaction term and covariates, we see similar results than the previous one, but with a few modifications. None of the day periods seem to be significant anymore for example.
+
+Examining the interaction term, we notice that Product photos are highly significant and the term with the highest value among all interaction variables. Surprisingly, Product status are also significant with a positive coefficient. Last, we examine the Wald Test between the model with covariates and the interaction model, and the low p-value indicates that the interaction term increases the ability of the model to explain the outcome variable. Still, we can see that the increment is much more discrete than when adding covariates, as the coefficient of determination only increases by 1 percent point to 26%. 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+waldtest(covar_model, inter_model, vcov=vcovCL)
+```
 
 
 
