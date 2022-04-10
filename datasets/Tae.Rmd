@@ -1,0 +1,26 @@
+---
+title: "Intro & Conclusion section for Lab2"
+author: "Group 2: Jeremy Lan, Taehun Kim, Nicolas Loffreda"
+header-includes:
+  \usepackage{longtable}
+  \usepackage{dcolumn}
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+A company’s online presence is becoming increasingly important in recent times where Covid-19 has accelerated society’s digital transition. By posting interesting, relatable, or attention-grabbing content, a corporation can expect increased user engagement, ultimately leading to a product purchase or simply more brand recognition. A majority of modern social media platforms use algorithms to suggest content to users. At first, a particular post might be shown to users at random with equal likelihood as other posts. However if the post sees more user engagement than other similarly aged content, the algorithm will continue to suggest it to others, having a multiplicative effect. Therefore, given that a company wants to convey some message to the users, carefully choosing the type and category of content used will greatly affect the number of users reached and level of engagement. In this paper, we examine the research question: “Does the type and category of content posted on Facebook impact user engagement?”
+
+
+## Conclusion
+
+This study aimed to discover the effects of different types of Facebook posts on user engagement using a dataset collected by Moro et al (2016) containing 500 posts from a world renowned cosmetic brand in 2014. Specifically, we explored the "types" and "categories" of each Facebook post as defined in the dataset. The "type" of a post could be Photo, Video, Link or Status, and represents the kind of content present in the post. The "category" could be Action, Inspiration or Product, and represents the purpose of the post. User engagement of a post was defined as someone who clicked on the post. In addition, we included control variables such as time of day and day of week to account for cyclic user patterns throughout time. Appropriate transformations were taken to ensure a linear model could be used, and multiple models were constructed with increasing complexity including for interaction terms between features.
+
+In general, we found that Status and Video-type posts performed the best, increasing a post's lifetime engaged users on average by 7.4-fold compared to the worst performing type, Link. A post with a Photo increased user engagement by roughly 2.7-fold compared a Link post. Although inspirational posts performed marginally better than product and actions posts, we found that its effect was not statistically significant at the 5% $\alpha$ level. These numbers stayed consistent across different models with control variables and interaction terms with the exception of product posts. With posts directly advertising a product or having explicit brand content, a post with a photo or a status would increase user engagement by roughly another 3-fold.
+
+This study should be useful to any social media managers of corporations that want to effectively engage with users online through Facebook or any other similar social media. Having a photo or relatable status will increase a post's chances of success, especially if it is directly marketing a product. This in turn should lead to either increased sales of the product and/or increased brand awareness for the company.
