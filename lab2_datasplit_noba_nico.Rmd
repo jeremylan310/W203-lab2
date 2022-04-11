@@ -1,0 +1,369 @@
+---
+title: "Data & Modeling section for Lab2"
+author: "Group 2: Jeremy Lan, Taehun Kim, Nicolas Loffreda"
+header-includes:
+  \usepackage{longtable}
+  \usepackage{dcolumn}
+output:
+  pdf_document: default
+---
+
+```{r set.seed(1), include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# imports
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(sandwich) # need to install
+library(lmtest)   # need to install
+library(stargazer)
+
+# read data
+fb_data = read_delim("./datasets/dataset_Facebook.csv", delim=";")
+
+# change col names
+cols = c(
+  "page_ttl_likes",
+  "type",
+  "category",
+  "post_month",
+  "post_wkday",
+  "post_hour",
+  "paid",
+  "lifetime_post_reach",
+  "lifetime_post_impressions",
+  "lifetime_engaged_users",
+  "lifetime_post_consumers",
+  "lifetime_post_consumptions",
+  "lifetime_post_impressions_from_page_have_likeds",
+  "lifetime_post_impressions_from_page_likes",
+  "lifetime_people_liked_engaged_with_post",
+  "comments",
+  "likes",
+  "shares",
+  "interactions"
+)
+colnames(fb_data) = cols
+
+fb_data = fb_data %>%
+  mutate(
+    category_str = case_when(
+      category == 1 ~ "Action",
+      category == 2 ~ "Product",
+      category == 3 ~ "Inspiration"
+    ),
+    period_of_day=case_when(
+      post_hour >= 1  & post_hour <= 5  ~ "Overnight",
+      post_hour >= 6  & post_hour <= 11 ~ "Morning",
+      post_hour >= 12 & post_hour <= 17 ~ "Afternoon",
+      post_hour >= 18 & post_hour <= 23 ~ "Evening"
+    ),
+    weekend=case_when(
+      post_wkday == 1 | post_wkday == 7 ~ 1,
+      TRUE                              ~ 0
+    )
+  ) %>% filter(!is.na(paid))
+
+# split data
+set.seed(1)
+split = sample(c(rep(0, 0.7 * nrow(fb_data)), rep(1, 0.3 * nrow(fb_data))))
+split = append(split, 1)
+fb_data_exp = fb_data[split==1,]
+fb_data_test = fb_data[split==0,]
+```
+
+## 2. Data
+
+The dataset we will be using for this analysis is a subset of that collected by Moro et al. (2016). The dataset contains a representative sample of 500 Facebook posts from a worldwide renowned cosmetic brand, collected between January 1st and December 31st of 2014. By the time the data was collected, Facebook was the most used social website, with roughly 1.28 billion monthly active users (Insights 2014). 
+
+Each observation from the dataset represents a post from this company, for which a variety of features have been collected.
+
+Given the large sample size, we will use a randomized sub-sample of 150 observations for exploration purposes and the remaining 350 for running the models. The only anomaly in the variables of interest is one missing value for `paid` variable, which we will be removing from the analysis, leaving us with a total of 499 observations.
+
+\begin{center}
+  Randomized sub-samples
+\end{center}
+
+\begin{center}
+  \begin{tabular}{l r}
+    \hline
+    Split     &  \\
+    \hline
+    Exploration & 150 \\
+    Test        & 349             \\
+    \hline
+    Total       & 499             \\
+    \hline
+  \end{tabular}
+\end{center}
+
+
+### 2.1 Engaged users
+
+The outcome variable will be the number of unique *engaged users* the post had through its lifetime. An engaged user is defined as someone who clicked in the post. Looking into this variable, we can see that it is fairly skewed to the right. To make the variable easier to work with, we will be applying a log transformation:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+p1 = fb_data_exp %>% ggplot() +
+  aes(x=lifetime_engaged_users) +
+  geom_histogram(bins=20, alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Engaged Users")
+
+p2 = fb_data_exp %>% ggplot() +
+  aes(x=log(lifetime_engaged_users)) +
+  geom_histogram(bins=20, alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Lof of Engaged Users")
+
+pb = fb_data_exp %>% ggplot() +
+  aes(x=lifetime_engaged_users) +
+  geom_boxplot(alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Engaged users")
+
+pb2 = fb_data_exp %>% ggplot() +
+  aes(x=log(lifetime_engaged_users)) +
+  geom_boxplot(alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Log of Engaged Users")
+
+grid.arrange(p1, pb, p2, pb2, ncol=2, nrow=2, top="Histogram and boxplot for the post's engaged users (normal and log)")
+```
+
+
+### 2.2 Category and Type
+The main variables we want to measure the impact on engaged users are the `type` and `category` of the post. The `type` is categorized in Photo, Video, Link or Status, and it represents what kind of content the post contained. We can see that most of the posts published were photos:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+fb_data_exp %>% ggplot() + 
+  aes(x=type) + 
+  geom_bar(width=0.5, alpha=0.4, fill="blue", color="blue") +
+  labs(
+    title="Counts of posts by type",
+    x="Post Type"
+  )
+```
+
+On the other hand, the category describes how the content of the post was displayed to the user. There were 3 distinct categories the dataset differentiates:
+  - Action: Special offers and contests
+  - Product: Direct advertisement or explicit brand content
+  - Inspiration: Non-explicit brand related content
+
+The number of posts published of each category are as follows:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+fb_data_exp %>% ggplot() + 
+  aes(x=category_str) + 
+  geom_bar(alpha=0.4, width=0.5, fill="blue", color="blue") +
+  labs(
+    title="Number of posts by category",
+    x="Post Category"
+  )
+```
+
+
+### 2.3 Covariates
+
+#### 2.3.1 Paid
+
+Among the covariates we will be including in the model is paid advertising. The variable `paid` will be encoded as a dummy variable to indicate whether the post had any paid media associated with it or not. We can see that in the exploratory dataset, ~32% of all the posts had some kind of paid media support:
+
+
+\begin{center}
+  Paid media support
+\end{center}
+
+\begin{center}
+  \begin{tabular}{l r}
+    \hline
+    Media Support   & Number of posts \\
+    \hline
+    No Paid support & 114             \\
+    Paid support    & 36             \\
+    \hline
+    Total           & 150             \\
+    \hline
+  \end{tabular}
+\end{center}
+
+
+#### 2.3.2 Period of day and Day of the week
+
+The last variables we will be including as control are the period of the day and the day of the week the post was published to account for the differences that may exist on user activity at different times and days. 
+
+In particular, we will distinguish 4 periods of the day, overnight, morning, afternoon and evening. The first going from 12am to 6am, the second one from 6am to 12pm, then 12pm to 6pm, and 6pm to 12am. 
+
+On the other hand, the days of the week will be divided into weekdays and weekends. This will be encoded in a dummy set to 1 if the period is a weekend.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+pod_plot = fb_data_exp %>% ggplot() + 
+  aes(x=period_of_day) + 
+  geom_bar(width=0.5, color="blue", fill="blue", alpha=0.5) +
+  labs(
+    x="Period of the day"
+  )
+
+wd_plot = fb_data_exp %>% ggplot() + 
+  aes(x=weekend) + 
+  geom_bar(width=0.5, color="blue", fill="blue", alpha=0.5) +
+  labs(
+    x="Weekend"
+  )
+
+grid.arrange(pod_plot, wd_plot, ncol=2, top="Distribution for  period of day and weekends")
+```
+
+
+
+## 3. Model
+
+### 3.1 Base Model
+
+As explained in the data section, we will be applying a log transformation to the outcome variable, engaged users. The base model will only include type and category as main explanatory variables:
+
+\(
+\widehat{\log(engaged\_users)}=\beta_0 + \beta_1 \text{ } type + \beta_2 \text{ } category
+\)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+base_model = lm(log(lifetime_engaged_users) ~ 1 + 
+                  type + category_str
+                , data=fb_data_test)
+```
+
+
+### 3.2 Adding Covariates
+
+With the base model established, we will be including as control variables paid media efforts, brand awareness, day of the week and period of the day. All these as described on the data section:
+
+\begin{align*}
+\widehat{\log(engaged\_users)}=\beta_0 &+ \beta_1 \text{ } type + \beta_2 \text{ } category\\ 
+&+ \beta_3 \text{ } paid +\beta_4 \text{ } day\_of\_week + \beta_5 \text{ } period\_of\_day
+\end{align*}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+covar_model = lm(log(lifetime_engaged_users) ~ 1 + 
+                   type + category_str +
+                   paid + 
+                   period_of_day + weekend
+                 , data=fb_data_test)
+```
+
+### 3.3 Adding Interaction term
+
+As a next model, we will be including an interaction term to account to see how the different types behave when paired with the different categories:
+
+
+\begin{align*}
+\widehat{\log(engaged\_users)}=\beta_0 &+ \beta_1 \text{ } type + \beta_2 \text{ } category + \beta_3 \text{ } paid \\
+& + \beta_4 \text{ } day\_of\_week + \beta_5 \text{ } period\_of\_day + \beta_6 \text{ } type*category
+\end{align*}
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+inter_model = lm(log(lifetime_engaged_users) ~ 1 + 
+                  type*category_str + 
+                  paid + 
+                  period_of_day + weekend 
+                , data=fb_data_test)
+```
+
+
+### 3.4 Standard Errors
+
+We understand that certain dependencies may exist among the posts given that they are all from the same company. This means that the people that know the brand and interact with the social site and posts may be similar on the different posts.
+
+Because of this reason, we will be using *robust clustered standard errors* to adjust the significance for any independence that may exist.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Standard Errors
+base_model_clse = coeftest(base_model, vcov=vcovCL)[, "Std. Error"]
+covar_model_clse = coeftest(covar_model, vcov=vcovCL)[, "Std. Error"]
+inter_model_clse = coeftest(inter_model, vcov=vcovCL)[, "Std. Error"]
+
+# Coefficients
+base_model_coef = coeftest(base_model, vcov=vcovCL)[, "Estimate"]
+covar_model_coef = coeftest(covar_model, vcov=vcovCL)[, "Estimate"]
+inter_model_coef = coeftest(inter_model, vcov=vcovCL)[, "Estimate"]
+
+# Pvals
+base_model_p = coeftest(base_model, vcov=vcovCL)[, "Pr(>|t|)"]
+covar_model_p = coeftest(covar_model, vcov=vcovCL)[, "Pr(>|t|)"]
+inter_model_p = coeftest(inter_model, vcov=vcovCL)[, "Pr(>|t|)"]
+```
+
+
+## 4. Results
+
+Results of the models described are shown in the table below:
+
+
+```{r echo=FALSE, results='hide'}
+results = stargazer(
+  base_model,
+  covar_model,
+  inter_model,
+  coef= list(base_model_coef, covar_model_coef, inter_model_coef),
+  se = list(base_model_clse, covar_model_clse, inter_model_clse),
+  p = list(base_model_p, covar_model_p, inter_model_p),
+  dep.var.labels="log(Engaged Users)",
+  type="latex",
+  header=F,
+  omit.stat="f",
+  covariate.labels=c(
+    "Type - Photo",
+    "Type - Status",
+    "Type - Video",
+    "Category - Inspiration",
+    "Category - Product",
+    "Paid Media",
+    "Period - Evening",
+    "Period - Morning",
+    "Period - Overnight",
+    "Weekend",
+    "Interaction - Photo:Inspiration",
+    "Interaction - Status:Inspiration",
+    "Interaction - Video:Inspiration",
+    "Interaction - Photo:Product",
+    "Interaction - Status:Product",
+    "Interaction - Video:Product"
+  )
+)
+
+results[2] = "\\begin{longtable}{@{\\extracolsep{5pt}}lccc}"
+results[5] = ""
+results[length(results)] = ""
+results[length(results)-1] = gsub("tabular", "longtable", results[length(results)-1])
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+cat(paste0(results), sep = "\n")
+```
+
+
+All the different types of posts are significant to an $\alpha$ level of 0.05 across all models, with Link being the omitted type. From the magnitude of the coefficients we can see that Video, Status and Photo perform much better than Link, with Status yielding the highest increase on engaged users. All these coefficients are quite stable across models as well. As for the categories, none of them are significant which is quite surprising.
+
+The second model includes the covariates paid, period of the day and weekday. The results are similar to those of the base model. As expected, we see that paid comes as significant with a positive coefficient, although smaller in magnitude than any of the post types. Posting on weekends doesn't seem to be significant in any of the models but some of the periods do. With the omitted day period being the afternoon, we see that morning is highly significant and has a negative coefficient. This implies that the period of the day associated with higher engagement is the afternoon.
+
+We ran a Wald Test between the base and the covariate models and it yields a low p-value, meaning that some of the covariates are helping to explain the variability of the engaged users. This phenomenon can also be appreciated in the coefficient of determination (i.e. $R^2$), as it jumps from 14% in the first model, to 17% after the addition of these covariates. 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+waldtest(base_model, covar_model, vcov=vcovCL)
+```
+
+When looking at the model with the interaction term and covariates, we see similar results than the previous one, but with a few modifications. The first thing we see is that now posting on weekends is significant to an $\alpha$ level of 0.1. We also see that the coefficient is negative, implying that posting during weekdays is associated with more engaged users.
+
+Examining the interaction term, we notice that none of the terms are significant, which is quite surprising. Some of the coefficients are missing, implying high correlation between them.
+
+Last, we examine the Wald Test between the model with covariates and the interaction model, and the high p-value indicates that the interaction term doesn't add explanatory power to the model. This can also be appreciated by the fact that the $R^2$ doesn't increase significantly from one model to another.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+waldtest(covar_model, inter_model, vcov=vcovCL)
+```
+
+
+
