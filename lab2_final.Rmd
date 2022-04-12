@@ -27,6 +27,7 @@ library(gridExtra)
 library(sandwich) # need to install
 library(lmtest)   # need to install
 library(stargazer)
+library(corrplot)
 
 # read data
 fb_data = read_delim("./datasets/dataset_Facebook.csv", delim=";")
@@ -389,9 +390,6 @@ bptest(inter_model)
 
 To satisfy this assumption, no variable in our model can be written as a linear combination of the other variables in the model. This assumption is satisfied given the following correlation matrix (one-hot encoding of the *type* and *category* variables was done to test correlation):
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-install.packages('corrplot')
-library(corrplot)
-
 fb_data = fb_data %>% 
   mutate(type_Photo = ifelse(type == "Photo", 1, 0),
   type_Status = ifelse(type == "Status", 1, 0),
@@ -448,13 +446,10 @@ knitr::include_graphics("Lab2Causal_2.jpg")
 In summary, one of the main limitations of this dataset is the amount of information regarding the posts themselves - although we know the type and category of post, we don't have visibility to the nature of the post contents, which we assume can have an effect on the company's brand awareness as well as user engagement. 
 
 
-
-
-
 ## 6. Conclusion
 
-This study aimed to discover the effects of different types of Facebook posts on user engagement using a dataset collected by Moro et al (2016) containing 500 posts from a world renowned cosmetic brand in 2014. Specifically, we explored the "types" and "categories" of each Facebook post as defined in the dataset. The "type" of a post could be Photo, Video, Link or Status, and represents the kind of content present in the post. The "category" could be Action, Inspiration or Product, and represents the purpose of the post. User engagement of a post was defined as someone who clicked on the post. In addition, we included control variables such as whether the post was paid, time of day and day of week to account for cyclic user patterns throughout time. Appropriate transformations were taken to ensure a linear model could be used, and multiple models were constructed with increasing complexity including for interaction terms between features.
+This study aimed to discover the effects of different types of Facebook posts on user engagement using a dataset collected by Moro et al (2016) containing 500 posts from a world renowned cosmetic brand in 2014. Specifically, we explored the "types" and "categories" of each Facebook post as defined in the dataset. The "type" of a post could be Photo, Video, Link or Status, and represents the kind of content present in the post. The "category" could be Action, Inspiration or Product, and represents the purpose of the post. User engagement of a post was defined as someone who clicked on the post. In addition, we included control variables such as whether the post was paid, time of day and day of week to account for cyclic user patterns throughout time. Appropriate transformations were taken to ensure a linear model could be used, and multiple models were constructed with increasing complexity including for interaction terms between features. Lastly, the data was split into 150 exploratory and 350 validation rows for the purposes of this study.
 
-In general, we found that Status and Video-type posts performed the best, increasing a post's lifetime engaged users on average by 6.9 and 5.2 times respectively compared to the worst performing type, Link. A post with a Photo increased user engagement by roughly 2.6-fold compared a Link post. Although inspirational posts performed marginally better than product and actions posts, we found that its effect was not statistically significant at the 5% $\alpha$ level. These numbers stayed consistent across different models with control variables and interaction terms.
+In general, we found that Status and Video-type posts performed the best, increasing a post's lifetime engaged users on average by 7.5 and 5.1 times respectively compared to the worst performing type, Link. A post with a Photo increased user engagement by roughly 2.6-fold compared a Link post. Although inspirational posts performed marginally better than product and actions posts, we found that its effect was not statistically significant at the 5% $\alpha$ level. These numbers stayed consistent across different models with control variables and interaction terms.
 
 This study should be useful to any social media managers of corporations that want to effectively engage with users online through Facebook or any other similar social media. Having a photo or relatable status will increase a post's chances of success, especially if it is directly marketing a product. This in turn should lead to either increased sales of the product and/or increased brand awareness for the company.
