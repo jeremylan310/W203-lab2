@@ -15,6 +15,7 @@ library(readr)
 library(ggplot2)
 library(gridExtra)
 library(dplyr)
+library(lmtest)
 
 # read data as is
 fb_data = read_delim("dataset_Facebook.csv", delim=";")
@@ -41,52 +42,82 @@ cols = c(
   "interactions"
 )
 colnames(fb_data) = cols
+
+fb_data = fb_data %>%
+  mutate(
+    category_str = case_when(
+      category == 1 ~ "Action",
+      category == 2 ~ "Product",
+      category == 3 ~ "Inspiration"
+    ),
+    period_of_day=case_when(
+      post_hour >= 1  & post_hour <= 5  ~ "Overnight",
+      post_hour >= 6  & post_hour <= 11 ~ "Morning",
+      post_hour >= 12 & post_hour <= 17 ~ "Afternoon",
+      post_hour >= 18 & post_hour <= 23 ~ "Evening"
+    ),
+    weekend=case_when(
+      post_wkday == 1 | post_wkday == 7 ~ 1,
+      TRUE                              ~ 0
+    )
+  ) %>% filter(!is.na(paid))
+# split data
+set.seed(1)
+split = sample(c(rep(0, 0.7 * nrow(fb_data)), rep(1, 0.3 * nrow(fb_data))))
+split = append(split, 1)
+fb_data_exp = fb_data[split==1,]
+fb_data_test = fb_data[split==0,]
+
+
+inter_model = lm(log(lifetime_engaged_users) ~ 1 + 
+                  type*category_str + 
+                  paid + 
+                  period_of_day + weekend 
+                , data=fb_data_test)
 ```
 ### 5. Limitations of your Model 
 
-#### 5a. Large-Sample Assumptions
-
-As a team, evaluate all of the large sample model assumptions. However, you do not necessarily want to discuss every assumption in your report. Instead, highlight any assumption that might pose significant problems for your analysis. For any violations that you identify, describe the statistical consequences. If you are able to identify any strategies to mitigate the consequences, explain these strategies. 
-
+#### 5a. Large-Sample Assumptions \newline
 The sample size of 500 observations indicates that we must evaluate and consider the following large-sample assumptions as pertaining to our model.
 
 1. Data is Independent and Identically Distributed (I.I.D)
 
 It is evident that our posts dataset is not I.I.D. As all of the posts are being made by the same cosmetics company and on the same platform (Facebook), inevitably all posts will be linked to the same company's products and promotions. Although we do not have unique detail regarding each post, it's likely that multiple posts may be tied to the same product or promotion. Other post parameters (time/date) may also not be independent, depending on the marketing strategy the team employed at the time this study was performed. Lastly, the number of impressions on each post are not independent from one another as many of the engagements/interactions may be from the same followers of the page across multiple posts. 
 
-Unfortunately, there is not much we can do to improve the raw data itself to reduce I.I.D. concerns. As all of the posts are anonymous we can't directly discern how to cluster or aggregate datapoints. Using robust standard errors may mitigate non-I.I.D. concerns and account for any heteroscedasticity in our model, although this is not an ideal solution. 
+Unfortunately, there is not much we can do to improve the raw data itself to reduce I.I.D. concerns. As all of the posts are anonymous we can't directly discern how to cluster or aggregate datapoints. Using robust standard errors may mitigate non-I.I.D. concerns and account for any heteroscedasticity in our model, although this is not an ideal solution. A Breusch-Pagan homoscedasticity test was run on our model - the high p-value above .05 means that we *fail* to reject $H_0$, meaning that we can't find enough evidence to say that homoscedasticity is not present. 
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-fb_data %>%
-  ggplot(aes(x=category, y=interactions)) +
-  geom_point(alpha=0.05) +
-  geom_smooth(color="blue", fill="red") +
-  labs(title="Predicted vs. Residuals: Checking homoscedasticity",
-       x="Model Predictions",
-       y="Residuals")
+```{r}
+bptest(inter_model)
 ```
 
 2. Unique BLP Exists - No perfect collinearity
 
-To satisfy this assumption, no variable in our model can be written as a linear combination of the other variables in the model. This assumption is satisfied given the following correlation matrix (modifying the "type" covariate to numerical):
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-fb_data['type_num'] <- NA
-fb_data[which(fb_data$type == "Photo"), ]$type_num = 0 
-fb_data[which(fb_data$type == "Status"), ]$type_num = 1 
-fb_data[which(fb_data$type == "View"), ]$type_num = 2 
-fb_data[which(fb_data$type == "Link"), ]$type_num = 3
-```
-
+To satisfy this assumption, no variable in our model can be written as a linear combination of the other variables in the model. This assumption is satisfied given the following correlation matrix (one-hot encoding of the *type* and *category* variables was done to test correlation):
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 install.packages('corrplot')
 library(corrplot)
-corrplot(cor(fb_data[c("lifetime_engaged_users", "post_wkday", "post_hour", "page_ttl_likes", "category", "type_num")]), method="number")
+
+fb_data = fb_data %>% 
+  mutate(type_Photo = ifelse(type == "Photo", 1, 0),
+  type_Status = ifelse(type == "Status", 1, 0),
+  type_Video = ifelse(type == "Video", 1, 0),
+  type_Link = ifelse(type == "Link", 1, 0))
+
+fb_data = fb_data %>% 
+  mutate(cat_Action = ifelse(category == 1, 1, 0),
+  cat_Product = ifelse(category == 2, 1, 0),
+  cat_Inspiration = ifelse(category == 3, 1, 0))
+
+corrplot(cor(fb_data[c("lifetime_engaged_users", "post_wkday", "post_hour", "cat_Action", "cat_Product", "cat_Inspiration", "type_Photo", "type_Status", "type_Video", "type_Link")]),method="color")
 ```
 
-**Intentionally omitted variables**
+#### 5b. Omitted Variables \newline \newline
 
-As with all real-world datasets, there are many variables that were intentionally or unintentionally omitted from our final model. Some variables were accessible within the dataset but were omitted, including:
+**Intentionally omitted variables** 
 
+Some variables were accessible within the dataset but were omitted, including:
+
+- Total Page Likes
 - Lifetime post total reach
 - Lifetime post total impressions
 - Lifetime post impressions by people who have liked the page
@@ -110,23 +141,13 @@ Not all products that the company promotes on its page will be of equal desirabi
 
 - Quality of the promotional material: 
 
-Similarly, not all posts made by the company on the Facebook page will be of similar quality. Even if posts are classified here as "Photo" or "Video", posting a well-designed infographic may lead to more engagement than sharing an image of lower design quality. This may be hard to objectively quantify but if we had access to the contents of each post it's possible that we would be able to classify posts as "high quality", "low quality" etc. Incorporating this into the model may help the company decide how much to invest in its graphic design/marketing agencies - if there is a significant effect when a higher-quality post is used, we may be able to quantify the positive effect a higher-quality post has on user engagement and ultimately product revenue.
+Similarly, not all posts made by the company on the Facebook page will be of similar quality. Even if posts are classified here as "Photo" or "Video", posting a well-designed infographic may lead to more engagement than sharing an image of lower design quality. This may be hard to objectively quantify but if we had access to the contents of each post it's possible that we would be able to classify posts as "high quality" or "low quality". Incorporating this variable into the model may help the company decide how much to invest in its graphic design/marketing agencies - if there is a significant effect when a higher-quality post is used, we may be able to quantify the positive effect a higher-quality post has on user engagement and product revenue.
 
-Both of these omitted variables ultimately affect the brand awareness of the company, as more desirable products and higher quality content both would increase traffic to the site. Currently our metric for brand awareness is the amount of likes on the page, but if these omitted variables were included in our analysis, potentially we could engineer a more holistic brand awareness metric as an input into our model. Both of these variables also directly have an effect on user engagement - the full causal graph of our model is shown below. 
+Both of these omitted variables ultimately affect the brand awareness of the company, as more desirable products and higher quality content both would increase traffic to the site. If these omitted variables were included in our analysis, potentially we could engineer a more holistic brand awareness metric as an input into our model. Both of these variables directly have an effect on user engagement - the full causal graph of our model is shown below. 
 
-#![Causal Graph](Lab2Causal.jpg)
+
+```{r, echo=FALSE, out.width="75%", fig.cap="Causal relationship graph", fig.align = "center"}
+knitr::include_graphics("Lab2Causal_2.jpg")
+```
 
 In summary, one of the main limitations of this dataset is the amount of information regarding the posts themselves - although we know the type and category of post, we don't have visibility to the nature of the post contents, which we assume can have an effect on the company's brand awareness as well as user engagement. 
-
-### 7. Conclusion
-
-Make sure that you end your report with a discussion that distills key insights from your estimates and addresses your research question. 
-
-## Encouragement for the Project
-
-This project touches on many of the skills that you have developed in the course. 
-
-- When you are reasoning about the world and the way that it works, you are implicitly reasoning about *random variables*. Although you might not reason with specific functions (e.g. $f_{x}(x) = x^2$) to describe these random variables, you are very likely to be reasoning about conditional expectations. 
-- This class is not a class in pure theory! And so, theories you have about the world need to be informed by samples of data. These samples might be iid, or they might not be. The team will have to assess how this, and other possible violations of model assumptions shape what they learn. 
-- Given a set of input variables, OLS regression produces an estimate of the BLP. But, how good of a predictor is this predictor? And, does the team have enough data to rely on large-sample theory, or does the team need to engage with the requirements of the smaller-sample? 
-- Throughout, you will have to communicate both to a technical and non-technical audience. 
