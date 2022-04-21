@@ -108,6 +108,20 @@ grid.arrange(p1, pb, p2, pb2, ncol=2, nrow=2, top="Histogram and boxplot for the
 ```
 
 
+```{r}
+p1 = fb_data %>% ggplot() +
+  aes(x=lifetime_engaged_users) +
+  geom_histogram(bins=20, alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Engaged Users")
+
+p2 = fb_data %>% ggplot() +
+  aes(x=log(lifetime_engaged_users)) +
+  geom_histogram(bins=20, alpha=0.4, fill="blueviolet", color="blueviolet") +
+  labs(x="Lof of Engaged Users")
+
+grid.arrange(p1, p2, ncol=2)
+```
+
 ### 2.2 Category and Type
 The main variables we want to measure the impact on engaged users are the `type` and `category` of the post. The `type` is categorized in Photo, Video, Link or Status, and it represents what kind of content the post contained. We can see that most of the posts published were photos:
 
